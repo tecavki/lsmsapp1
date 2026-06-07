@@ -1,15 +1,12 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Appointment from '@/lib/models/Appointment';
-import User from '@/lib/models/User';
 import { getSession } from '@/lib/session';
 
 async function getSessionUser(request) {
-  const req = new Request(request.url, { headers: { cookie: request.headers.get('cookie') || '' } });
-  const res = new NextResponse();
-  const session = await getSession(req, res);
-  if (!session.user) return null;
-  return session.user;
+  const response = NextResponse.next();
+  const session = await getSession(request, response);
+  return session?.user || null;
 }
 
 export async function GET(request) {

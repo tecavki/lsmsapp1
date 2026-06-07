@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { findOrCreateUser } from '@/lib/auth';
-import { cookies } from 'next/headers';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -14,9 +13,7 @@ export async function GET(request) {
   try {
     const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: process.env.DISCORD_CLIENT_ID,
         client_secret: process.env.DISCORD_CLIENT_SECRET,
@@ -33,19 +30,14 @@ export async function GET(request) {
     }
 
     const userResponse = await fetch('https://discord.com/api/users/@me', {
-      headers: {
-        Authorization: `Bearer ${tokenData.access_token}`,
-      },
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
 
     const discordUser = await userResponse.json();
-
     const user = await findOrCreateUser(discordUser);
 
-    const cookieStore = cookies();
-    const req = new Request(request.url, { headers: { cookie: request.headers.get('cookie') || '' } });
-    const res = new NextResponse();
-    const session = await getSession(req, res);
+    const response = NextResponse.redirect(new URL('/dashboard', request.url));
+    const session = await getSession(request, response);
 
     session.user = {
       id: user._id.toString(),
@@ -59,14 +51,6 @@ export async function GET(request) {
     };
 
     await session.save();
-
-    const response = NextResponse.redirect(new URL('/dashboard', request.url));
-
-    const setCookieHeader = res.headers.get('set-cookie');
-    if (setCookieHeader) {
-      response.headers.set('set-cookie', setCookieHeader);
-    }
-
     return response;
   } catch (error) {
     console.error('Auth error:', error);

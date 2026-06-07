@@ -10,13 +10,7 @@ const sessionOptions = {
   },
 };
 
-export async function getSession(req, res) {
-  const session = await getIronSession(req, res, sessionOptions);
+export async function getSession(request, response) {
+  const session = await getIronSession(request, response, sessionOptions);
   return session;
-}
-
-export async function getSessionFromCookies(cookies) {
-  const req = { headers: { cookie: cookies } };
-  const res = { getHeader() {}, setHeader() {} };
-  return getIronSession(req, res, sessionOptions);
 }

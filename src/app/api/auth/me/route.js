@@ -1,20 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { getIronSession } from 'iron-session';
+
+const sessionOptions = {
+  password: process.env.SESSION_SECRET || 'complex_password_at_least_32_characters_long_for_security',
+  cookieName: 'lsms_session',
+  cookieOptions: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+  },
+};
 
 export async function GET(request) {
-  const req = new Request(request.url, { headers: { cookie: request.headers.get('cookie') || '' } });
-  const res = new NextResponse();
-  const session = await getSession(req, res);
-
-  if (!session.user) {
-    return NextResponse.json({ user: null });
-  }
-
-  const setCookieHeader = res.headers.get('set-cookie');
-  const response = NextResponse.json({ user: session.user });
-  if (setCookieHeader) {
-    response.headers.set('set-cookie', setCookieHeader);
-  }
-
-  return response;
+  const response = NextResponse.json({});
+  const session = await getIronSession(request, response, sessionOptions);
+  return NextResponse.json({ user: session.user || null });
 }
